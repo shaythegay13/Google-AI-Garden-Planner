@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Agentic AI Garden Planner",
+  "description": "An AI-powered garden planner that provides personalized crop recommendations, layout plans, and schedules based on your location, space, and preferences.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
