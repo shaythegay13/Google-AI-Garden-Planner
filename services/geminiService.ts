@@ -1,9 +1,20 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 // FIX: Add EducationalResource to type imports.
 import type { FormData, GardenPlan, DiseaseInfo, EducationalResource } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Delay initialization until API key is available
+let ai: GoogleGenAI | null = null;
+
+function getAI(): GoogleGenAI {
+  if (!ai) {
+    const apiKey = process.env.API_KEY as string;
+    if (!apiKey || apiKey === 'undefined') {
+      throw new Error("API key is not configured. Set GEMINI_API_KEY in .env or .env.local.");
+    }
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 function fileToGenerativePart(base64: string, mimeType: string) {
   return {
@@ -56,7 +67,7 @@ export const generateGardenPlan = async (formData: FormData): Promise<GardenPlan
     const prompt = buildPrompt(formData);
     const contents = formData.photo ? [fileToGenerativePart(formData.photo.base64, formData.photo.mimeType), {text: prompt}] : [{text: prompt}];
 
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
         model: 'gemini-2.5-pro',
         contents: { parts: contents },
         config: {
@@ -126,7 +137,7 @@ export const identifyPlantDisease = async (photo: { base64: string, mimeType: st
     const imagePart = fileToGenerativePart(photo.base64, photo.mimeType);
     const textPart = { text: "Identify the potential plant disease in this image. Describe it and suggest organic treatment options. Respond in JSON format with keys: 'disease', 'description', 'treatment'." };
 
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: { parts: [imagePart, textPart] },
         config: {
